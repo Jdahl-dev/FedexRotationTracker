@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FedEx Hub Rotation Tracker</title>
+    <!-- Script to convert HTML elements into shareable image files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-main: #0f172a; /* Slightly darker for better readability */
+            --text-muted: #475569; /* Higher contrast muted text */
+            --fedex-purple: #4d148c;
+            --fedex-orange: #ff6600;
+            
+            /* Transparent Blue colors strictly as requested */
+            --light-trans-blue: rgba(14, 165, 233, 0.25); 
+            --dark-trans-blue: rgba(3, 105, 161, 0.85);  
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 12px;
+            padding-bottom: 40px;
+        }
+
+        header {
+            background: var(--fedex-purple);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+            font-weight: 800;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: #e2e8f0;
+        }
+
+        .legend {
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+        }
+
+        .day-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Target wrapper for clean image captures */
+        .capture-area {
+            background: var(--card-bg);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .day-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--fedex-purple);
+        }
+
+        /* Large manual rotation counter circle */
+        .rotation-circle-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rotation-circle {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 4px solid var(--fedex-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .rotation-circle input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            outline: none;
+            background: transparent;
+        }
+
+        .rotation-circle-wrapper label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .inputs-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .input-group select {
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #cbd5e1;
+            font-size: 1.1rem;
+            font-weight: 700;
+            background-color: #fff;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        .grid-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        /* 48-Spot Ribbon Grid with Larger Text */
+        .spots-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr); /* 6 wide on mobile makes numbers MUCH bigger */
+            gap: 6px;
+            background: #f8fafc;
+            padding: 8px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        /* Adjust to 12 columns on slightly wider/tablet screens */
+        @media(min-width: 480px) {
+            .spots-grid {
+                grid-template-columns: repeat(12, 1fr);
+            }
+        }
+
+        .spot {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;       /* Doubled the font size */
+            font-weight: 800;      /* Forced maximum boldness */
+            border-radius: 6px;
+            background-color: #fff;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+            position: relative;
+        }
+
+        /* Our specialized team slots */
+        .spot.our-spot {
+            border: 3px solid var(--fedex-orange);
+            color: var(--text-main);
+            box-shadow: 0 0 4px rgba(255, 102, 0, 0.2);
+        }
+
+        /* Highlighting color applications */
+        .spot.highlight-light {
+            background-color: var(--light-trans-blue) !important;
+            color: var(--text-main);
+        }
+
+        .spot.highlight-dark {
+            background-color: var(--dark-trans-blue) !important;
+            color: #ffffff !important;
+            border-color: var(--dark-trans-blue);
+        }
+
+        /* Share / Capture Button style */
+        .share-btn {
+            width: 100%;
+            margin-top: 14px;
+            padding: 12px;
+            background-color: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            color: var(--fedex-purple);
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .share-btn:active {
+            background-color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Hub Rotation Visualizer</h1>
+        <p>Tracking spots 0 - 47. Managed team slots are outlined in orange.</p>
+    </header>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="color-box" style="border: 3px solid var(--fedex-orange);"></div>
+            <span>Our Spots (29, 30, 31, 35, 37)</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background: var(--dark-trans-blue);"></div>
+            <span>Current Position / Lap Progress</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background: var(--light-trans-blue);"></div>
+            <span>Completed Rotations (Laps Complete)</span>
+        </div>
+    </div>
+
+    <!-- Container for dynamic injection of the 7 days -->
+    <div id="days-container"></div>
+
+    <script>
+        const OUR_SPOTS = [29, 30, 31, 35, 37];
+        const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        // Storage initialization 
+        let appData = JSON.parse(localStorage.getItem('fedex_rotation_data_v2')) || {};
+
+        DAYS.forEach(day => {
+            if (!appData[day]) {
+                appData[day] = { start: 0, end: 0, rotations: 0 };
+            }
+        });
+
+        function saveToStorage() {
+            localStorage.setItem('fedex_rotation_data_v2', JSON.stringify(appData));
+        }
+
+        function buildDashboard() {
+            const container = document.getElementById('days-container');
+            container.innerHTML = '';
+
+            DAYS.forEach(day => {
+                const data = appData[day];
+                const card = document.createElement('div');
+                card.className = 'day-card';
+
+                let startOptions = '';
+                let endOptions = '';
+                for(let i=0; i<=47; i++) {
+                    startOptions += `<option value="${i}" ${data.start == i ? 'selected' : ''}>${i}</option>`;
+                    endOptions += `<option value="${i}" ${data.end == i ? 'selected' : ''}>${i}</option>`;
+                }
+
+                // Internal capture-area wrapper separates the functional save button from the exported photo layout
+                card.innerHTML = `
+                    <div class="capture-area" id="capture-${day}">
+                        <div class="day-header">
+                            <div class="day-title">${day}</div>
+                            <div class="rotation-circle-wrapper">
+                                <div class="rotation-circle">
+                                    <input type="number" min="0" max="99" id="rot-${day}" value="${data.rotations}" inputmode="numeric">
+                                </div>
+                                <label>Rotations</label>
+                            </div>
+                        </div>
+                        
+                        <div class="inputs-row">
+                            <div class="input-group">
+                                <label for="start-${day}">Started At</label>
+                                <select id="start-${day}">${startOptions}</select>
+                            </div>
+                            <div class="input-group">
+                                <label for="end-${day}">Ended At</label>
+                                <select id="end-${day}">${endOptions}</select>
+                            </div>
+                        </div>
+
+                        <div class="grid-label">Rotation Visualizer (0-47)</div>
+                        <div class="spots-grid" id="grid-${day}"></div>
+                    </div>
+                    
+                    <button class="share-btn" onclick="saveCardAsImage('${day}')">
+                        📸 Save ${day} as Image
+                    </button>
+                `;
+
+                container.appendChild(card);
+                renderGridElements(day);
+
+                // Document input attachments
+                document.getElementById(`start-${day}`).addEventListener('change', (e) => {
+                    appData[day].start = parseInt(e.target.value);
+                    saveToStorage();
+                    renderGridElements(day);
+                });
+
+                document.getElementById(`end-${day}`).addEventListener('change', (e) => {
+                    appData[day].end = parseInt(e.target.value);
+                    saveToStorage();
+                    renderGridElements(day);
+                });
+
+                document.getElementById(`rot-${day}`).addEventListener('input', (e) => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val) || val < 0) val = 0;
+                    appData[day].rotations = val;
+                    saveToStorage();
+                    renderGridElements(day);
+                });
+            });
+        }
+
+        function renderGridElements(day) {
+            const grid = document.getElementById(`grid-${day}`);
+            grid.innerHTML = '';
+            
+            const start = appData[day].start;
+            const end = appData[day].end;
+            const rotations = appData[day].rotations;
+
+            for (let i = 0; i <= 47; i++) {
+                const spotDiv = document.createElement('div');
+                spotDiv.className = 'spot';
+                spotDiv.textContent = i;
+
+                if (OUR_SPOTS.includes(i)) {
+                    spotDiv.classList.add('our-spot');
+                }
+
+                if (rotations > 0) {
+                    spotDiv.classList.add('highlight-light');
+                    if (i <= end) {
+                        spotDiv.classList.add('highlight-dark');
+                    }
+                } else {
+                    if (start <= end) {
+                        if (i >= start && i <= end) {
+                            spotDiv.classList.add('highlight-dark');
+                        }
+                    } else {
+                        if (i >= start || i <= end) {
+                            spotDiv.classList.add('highlight-dark');
+                        }
+                    }
+                }
+                grid.appendChild(spotDiv);
+            }
+        }
+
+        // Image generation function
+        function saveCardAsImage(day) {
+            const targetElement = document.getElementById(`capture-${day}`);
+            
+            // Temporary styling optimizations to ensure inputs display accurately inside flat picture renders
+            const selectElements = targetElement.querySelectorAll('select');
+            selectElements.forEach(select => {
+                select.style.border = '2px solid #4d148c';
+            });
+
+            html2canvas(targetElement, {
+                scale: 2, // Doubles rendering resolution for clean visibility on high-res displays
+                backgroundColor: "#ffffff",
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                // Reset select element borders back to stylesheet parameters
+                selectElements.forEach(select => { select.style.border = ''; });
+
+                // Construct a direct file down-link setup
+                const link = document.createElement('a');
+                link.download = `FedEx_Rotation_${day}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                alert("Could not generate image file. If inside an integrated app web-view, open in a primary browser window instead.");
+            });
+        }
+
+        buildDashboard();
+    </script>
+</body>
+</html>
