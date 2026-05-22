@@ -49,18 +49,38 @@
             padding: 10px 14px;
             border-radius: 10px;
             box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1);
-            flex-shrink: 0; /* Prevents header from shrinking */
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        header h1 {
+        .header-text h1 {
             font-size: 1.25rem;
             margin-bottom: 2px;
             font-weight: 800;
         }
 
-        header p {
+        .header-text p {
             font-size: 0.8rem;
             color: #e2e8f0;
+        }
+
+        /* Hub Toggle Button Styles */
+        .hub-toggle-btn {
+            background: var(--fedex-orange);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: transform 0.1s ease;
+        }
+        .hub-toggle-btn:active {
+            transform: scale(0.95);
         }
 
         .legend {
@@ -68,7 +88,7 @@
             padding: 10px;
             border-radius: 10px;
             display: flex;
-            flex-direction: row; /* Horizontal rows fit better on standard layouts */
+            flex-direction: row;
             flex-wrap: wrap;
             justify-content: space-between;
             gap: 6px;
@@ -90,10 +110,37 @@
             border-radius: 4px;
         }
 
-        /* Main app container stretches to consume remaining vertical height */
-        #days-container {
+        /* Sliding Animation Viewport Setup */
+        #slider-viewport {
             flex: 1;
-            min-height: 0; /* Critical fix for nested flex layout scaling */
+            min-height: 0;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        /* Container holding both charts side-by-side */
+        #slider-container {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Active classes to handle the sliding transitions */
+        #slider-container.show-salt {
+            transform: translateX(0%);
+        }
+        #slider-container.show-magna {
+            transform: translateX(-50%);
+        }
+
+        .hub-panel {
+            width: 50%;
+            height: 100%;
             display: flex;
             flex-direction: column;
         }
@@ -137,7 +184,7 @@
             color: var(--fedex-purple);
         }
 
-        /* Large manual rotation counter circle scaled down slightly to preserve space */
+        /* Large manual rotation counter circle */
         .rotation-circle-wrapper {
             display: flex;
             flex-direction: column;
@@ -217,7 +264,7 @@
             flex-shrink: 0;
         }
 
-        /* Grid scaling architecture: dynamic box dimensions using flex-grow variables */
+        /* Grid scaling architecture */
         .spots-grid {
             display: grid;
             grid-template-columns: repeat(6, minmax(0, 1fr)); 
@@ -228,12 +275,16 @@
             border: 2px solid #e2e8f0;
             flex: 1;
             min-height: 0;
-            overflow-y: auto; /* Fallback insurance in case screen height gets micro-small */
+            overflow-y: auto;
         }
 
-        /* 12 columns on slightly wider/tablet screen footprints */
+        /* Adjusted layout columns for Magna grid to make 5 spots look premium and clean */
+        .magna-grid-layout {
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        }
+
         @media(min-width: 480px) {
-            .spots-grid {
+            .spots-grid:not(.magna-grid-layout) {
                 grid-template-columns: repeat(12, minmax(0, 1fr));
             }
         }
@@ -249,7 +300,6 @@
             color: #64748b;
             border: 1px solid #cbd5e1;
             position: relative;
-            /* Keeps blocks proportional without hardcoding aspect-ratio height crashes */
             min-height: 28px; 
         }
 
@@ -300,18 +350,21 @@
 <body>
 
     <header>
-        <h1>Hub Rotation Visualizer</h1>
-        <p>Tracking spots 0 - 47. Managed team slots are outlined in orange.</p>
+        <div class="header-text">
+            <h1 id="header-hub-title">Salt Lake Hub</h1>
+            <p id="header-hub-desc">Tracking spots 0 - 47. Managed spots outlined in orange.</p>
+        </div>
+        <button class="hub-toggle-btn" id="toggle-hub-action" onclick="switchHubView()">Go to MAGNA</button>
     </header>
 
     <div class="legend">
         <div class="legend-item">
             <div class="color-box" style="border: 2px solid var(--fedex-orange);"></div>
-            <span>Our Spots (29, 30, 31, 35, 37)</span>
+            <span id="legend-spots-text">Our Spots (29, 30, 31, 34, 37)</span>
         </div>
         <div class="legend-item">
             <div class="color-box" style="background: var(--dark-trans-blue);"></div>
-            <span>Current Position / Lap Progress</span>
+            <span>Current Position / Progress</span>
         </div>
         <div class="legend-item">
             <div class="color-box" style="background: var(--light-trans-blue);"></div>
@@ -319,10 +372,83 @@
         </div>
     </div>
 
-    <div id="days-container"></div>
+    <!-- The sliding container setup -->
+    <div id="slider-viewport">
+        <div id="slider-container" class="show-salt">
+            
+            <!-- SALT LAKE PANEL (0-47) -->
+            <div class="hub-panel">
+                <div class="day-card">
+                    <div class="capture-area" id="capture-salt">
+                        <div class="day-header">
+                            <div class="day-title" id="day-title-salt">Today</div>
+                            <div class="rotation-circle-wrapper">
+                                <div class="rotation-circle">
+                                    <input type="number" min="0" max="99" id="rot-salt" value="0" inputmode="numeric">
+                                </div>
+                                <label>Rotations</label>
+                            </div>
+                        </div>
+                        <div class="inputs-row">
+                            <div class="input-group">
+                                <label for="start-salt">Started At</label>
+                                <select id="start-salt"></select>
+                            </div>
+                            <div class="input-group">
+                                <label for="end-salt">Ended At</label>
+                                <select id="end-salt"></select>
+                            </div>
+                        </div>
+                        <div class="grid-label">Rotation Visualizer (0-47)</div>
+                        <div class="spots-grid" id="grid-salt"></div>
+                    </div>
+                    <button class="share-btn" onclick="saveCardAsImage('salt')">
+                        📸 Save Salt Lake Chart as Image
+                    </button>
+                </div>
+            </div>
+
+            <!-- MAGNA PANEL (1-5) -->
+            <div class="hub-panel">
+                <div class="day-card">
+                    <div class="capture-area" id="capture-magna">
+                        <div class="day-header">
+                            <div class="day-title" id="day-title-magna">Today</div>
+                            <div class="rotation-circle-wrapper">
+                                <div class="rotation-circle">
+                                    <input type="number" min="0" max="99" id="rot-magna" value="0" inputmode="numeric">
+                                </div>
+                                <label>Rotations</label>
+                            </div>
+                        </div>
+                        <div class="inputs-row">
+                            <div class="input-group">
+                                <label for="start-magna">Started At</label>
+                                <select id="start-magna"></select>
+                            </div>
+                            <div class="input-group">
+                                <label for="end-magna">Ended At</label>
+                                <select id="end-magna"></select>
+                            </div>
+                        </div>
+                        <div class="grid-label">Magna Rotation Visualizer (1-5)</div>
+                        <div class="spots-grid magna-grid-layout" id="grid-magna"></div>
+                    </div>
+                    <button class="share-btn" onclick="saveCardAsImage('magna')">
+                        📸 Save Magna Chart as Image
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <script>
-        const OUR_SPOTS = [29, 30, 31, 35, 37];
+        // Target configs per requirements
+        const SALT_SPOTS = [29, 30, 31, 34, 37]; // 35 swapped out for 34
+        const MAGNA_SPOTS = [4, 5];
+
+        let activeHub = "salt"; // Default layout tracker state
 
         function getUtahDayName() {
             const options = { weekday: 'long', timeZone: 'America/Denver' };
@@ -330,117 +456,120 @@
         }
 
         const currentDay = getUtahDayName();
+        
+        // Initialize distinct Storage IDs to avoid crossover bugs
+        let appData = JSON.parse(localStorage.getItem('fedex_rotation_data_v3')) || {
+            salt: {},
+            magna: {}
+        };
 
-        let appData = JSON.parse(localStorage.getItem('fedex_rotation_data_v2')) || {};
-
-        if (!appData[currentDay]) {
-            appData[currentDay] = { start: 0, end: 0, rotations: 0 };
-        }
+        if (!appData.salt[currentDay]) appData.salt[currentDay] = { start: 0, end: 0, rotations: 0 };
+        if (!appData.magna[currentDay]) appData.magna[currentDay] = { start: 1, end: 1, rotations: 0 };
 
         function saveToStorage() {
-            localStorage.setItem('fedex_rotation_data_v2', JSON.stringify(appData));
+            localStorage.setItem('fedex_rotation_data_v3', JSON.stringify(appData));
         }
 
-        function buildDashboard() {
-            const container = document.getElementById('days-container');
-            container.innerHTML = '';
+        // Toggles layouts with sleek slider motion and updates headers dynamically
+        function switchHubView() {
+            const container = document.getElementById('slider-container');
+            const mainTitle = document.getElementById('header-hub-title');
+            const mainDesc = document.getElementById('header-hub-desc');
+            const toggleBtn = document.getElementById('toggle-hub-action');
+            const legendText = document.getElementById('legend-spots-text');
 
-            const data = appData[currentDay];
-            const card = document.createElement('div');
-            card.className = 'day-card';
-
-            let startOptions = '';
-            let endOptions = '';
-            for(let i=0; i<=47; i++) {
-                startOptions += `<option value="${i}" ${data.start == i ? 'selected' : ''}>${i}</option>`;
-                endOptions += `<option value="${i}" ${data.end == i ? 'selected' : ''}>${i}</option>`;
+            if (activeHub === "salt") {
+                activeHub = "magna";
+                container.className = "show-magna";
+                mainTitle.textContent = "Magna Hub";
+                mainDesc.textContent = "Tracking spots 1 - 5. Managed spots outlined in orange.";
+                toggleBtn.textContent = "Go to SALT LAKE";
+                legendText.textContent = `Our Spots (${MAGNA_SPOTS.join(', ')})`;
+            } else {
+                activeHub = "salt";
+                container.className = "show-salt";
+                mainTitle.textContent = "Salt Lake Hub";
+                mainDesc.textContent = "Tracking spots 0 - 47. Managed spots outlined in orange.";
+                toggleBtn.textContent = "Go to MAGNA";
+                legendText.textContent = `Our Spots (${SALT_SPOTS.join(', ')})`;
             }
+        }
 
-            card.innerHTML = `
-                <div class="capture-area" id="capture-${currentDay}">
-                    <div class="day-header">
-                        <div class="day-title">${currentDay} (Today)</div>
-                        <div class="rotation-circle-wrapper">
-                            <div class="rotation-circle">
-                                <input type="number" min="0" max="99" id="rot-${currentDay}" value="${data.rotations}" inputmode="numeric">
-                            </div>
-                            <label>Rotations</label>
-                        </div>
-                    </div>
-                    
-                    <div class="inputs-row">
-                        <div class="input-group">
-                            <label for="start-${currentDay}">Started At</label>
-                            <select id="start-${currentDay}">${startOptions}</select>
-                        </div>
-                        <div class="input-group">
-                            <label for="end-${currentDay}">Ended At</label>
-                            <select id="end-${currentDay}">${endOptions}</select>
-                        </div>
-                    </div>
+        function setupHubControls(hubType, minVal, maxVal) {
+            const data = appData[hubType][currentDay];
+            
+            // Set up local titles
+            document.getElementById(`day-title-${hubType}`).textContent = `${currentDay} (Today)`;
+            document.getElementById(`rot-${hubType}`).value = data.rotations;
 
-                    <div class="grid-label">Rotation Visualizer (0-47)</div>
-                    <div class="spots-grid" id="grid-${currentDay}"></div>
-                </div>
-                
-                <button class="share-btn" onclick="saveCardAsImage('${currentDay}')">
-                    📸 Save ${currentDay} as Image
-                </button>
-            `;
+            // Generate precise dropdown option limits
+            const startSelect = document.getElementById(`start-${hubType}`);
+            const endSelect = document.getElementById(`end-${hubType}`);
+            
+            let optionsHtml = '';
+            for (let i = minVal; i <= maxVal; i++) {
+                optionsHtml += `<option value="${i}">${i}</option>`;
+            }
+            
+            startSelect.innerHTML = optionsHtml;
+            endSelect.innerHTML = optionsHtml;
+            
+            startSelect.value = data.start;
+            endSelect.value = data.end;
 
-            container.appendChild(card);
-            renderGridElements(currentDay);
-
-            document.getElementById(`start-${currentDay}`).addEventListener('change', (e) => {
-                appData[currentDay].start = parseInt(e.target.value);
+            // Attach clean data listener monitors
+            startSelect.addEventListener('change', (e) => {
+                appData[hubType][currentDay].start = parseInt(e.target.value);
                 saveToStorage();
-                renderGridElements(currentDay);
+                renderGrid(hubType, minVal, maxVal);
             });
 
-            document.getElementById(`end-${currentDay}`).addEventListener('change', (e) => {
-                appData[currentDay].end = parseInt(e.target.value);
+            endSelect.addEventListener('change', (e) => {
+                appData[hubType][currentDay].end = parseInt(e.target.value);
                 saveToStorage();
-                renderGridElements(currentDay);
+                renderGrid(hubType, minVal, maxVal);
             });
 
-            document.getElementById(`rot-${currentDay}`).addEventListener('input', (e) => {
+            document.getElementById(`rot-${hubType}`).addEventListener('input', (e) => {
                 let val = parseInt(e.target.value);
                 if (isNaN(val) || val < 0) val = 0;
-                appData[currentDay].rotations = val;
+                appData[hubType][currentDay].rotations = val;
                 saveToStorage();
-                renderGridElements(currentDay);
+                renderGrid(hubType, minVal, maxVal);
             });
+
+            renderGrid(hubType, minVal, maxVal);
         }
 
-        function renderGridElements(day) {
-            const grid = document.getElementById(`grid-${day}`);
+        function renderGrid(hubType, minVal, maxVal) {
+            const grid = document.getElementById(`grid-${hubType}`);
             grid.innerHTML = '';
             
-            const start = appData[day].start;
-            const end = appData[day].end;
-            const rotations = appData[day].rotations;
+            const data = appData[hubType][currentDay];
+            const targetTeamSpots = (hubType === 'salt') ? SALT_SPOTS : MAGNA_SPOTS;
 
-            for (let i = 0; i <= 47; i++) {
+            for (let i = minVal; i <= maxVal; i++) {
                 const spotDiv = document.createElement('div');
                 spotDiv.className = 'spot';
                 spotDiv.textContent = i;
 
-                if (OUR_SPOTS.includes(i)) {
+                if (targetTeamSpots.includes(i)) {
                     spotDiv.classList.add('our-spot');
                 }
 
-                if (rotations > 0) {
+                // Mathematical highlight layout logic matching your version perfectly
+                if (data.rotations > 0) {
                     spotDiv.classList.add('highlight-light');
-                    if (i <= end) {
+                    if (i <= data.end) {
                         spotDiv.classList.add('highlight-dark');
                     }
                 } else {
-                    if (start <= end) {
-                        if (i >= start && i <= end) {
+                    if (data.start <= data.end) {
+                        if (i >= data.start && i <= data.end) {
                             spotDiv.classList.add('highlight-dark');
                         }
                     } else {
-                        if (i >= start || i <= end) {
+                        if (i >= data.start || i <= data.end) {
                             spotDiv.classList.add('highlight-dark');
                         }
                     }
@@ -449,12 +578,11 @@
             }
         }
 
-        function saveCardAsImage(day) {
-            const targetElement = document.getElementById(`capture-${day}`);
+        // Capture logic isolated per panel view
+        function saveCardAsImage(hubType) {
+            const targetElement = document.getElementById(`capture-${hubType}`);
             const selectElements = targetElement.querySelectorAll('select');
-            selectElements.forEach(select => {
-                select.style.border = '2px solid #4d148c';
-            });
+            selectElements.forEach(select => { select.style.border = '2px solid #4d148c'; });
 
             html2canvas(targetElement, {
                 scale: 2, 
@@ -463,9 +591,8 @@
                 useCORS: true
             }).then(canvas => {
                 selectElements.forEach(select => { select.style.border = ''; });
-
                 const link = document.createElement('a');
-                link.download = `FedEx_Rotation_${day}.png`;
+                link.download = `FedEx_${hubType}_Rotation_${currentDay}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             }).catch(err => {
@@ -473,7 +600,9 @@
             });
         }
 
-        buildDashboard();
+        // Initialize components for both views on launch
+        setupHubControls('salt', 0, 47);
+        setupHubControls('magna', 1, 5);
     </script>
 </body>
 </html>
