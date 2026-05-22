@@ -10,8 +10,8 @@
         :root {
             --bg-color: #f4f6f9;
             --card-bg: #ffffff;
-            --text-main: #0f172a; /* Slightly darker for better readability */
-            --text-muted: #475569; /* Higher contrast muted text */
+            --text-main: #0f172a; 
+            --text-muted: #475569; 
             --fedex-purple: #4d148c;
             --fedex-orange: #ff6600;
             
@@ -28,65 +28,86 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Lock the body height and prevent standard browser scrolling */
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 12px;
-            padding-bottom: 40px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         header {
             background: var(--fedex-purple);
             color: white;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            padding: 10px 14px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1);
+            flex-shrink: 0; /* Prevents header from shrinking */
         }
 
         header h1 {
-            font-size: 1.5rem;
-            margin-bottom: 4px;
+            font-size: 1.25rem;
+            margin-bottom: 2px;
             font-weight: 800;
         }
 
         header p {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #e2e8f0;
         }
 
         .legend {
             background: var(--card-bg);
-            padding: 14px;
-            border-radius: 12px;
-            margin-bottom: 16px;
+            padding: 10px;
+            border-radius: 10px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            font-size: 0.95rem;
+            flex-direction: row; /* Horizontal rows fit better on standard layouts */
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 0.8rem;
             font-weight: 600;
             border: 1px solid #cbd5e1;
+            flex-shrink: 0;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .color-box {
-            width: 20px;
-            height: 20px;
-            border-radius: 6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        /* Main app container stretches to consume remaining vertical height */
+        #days-container {
+            flex: 1;
+            min-height: 0; /* Critical fix for nested flex layout scaling */
+            display: flex;
+            flex-direction: column;
         }
 
         .day-card {
             background: var(--card-bg);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.05);
             border: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
         }
 
         /* Target wrapper for clean image captures */
@@ -94,36 +115,41 @@
             background: var(--card-bg);
             padding: 4px;
             border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
         }
 
         .day-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 10px;
+            padding-bottom: 6px;
+            flex-shrink: 0;
         }
 
         .day-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 800;
             color: var(--fedex-purple);
         }
 
-        /* Large manual rotation counter circle */
+        /* Large manual rotation counter circle scaled down slightly to preserve space */
         .rotation-circle-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
         }
 
         .rotation-circle {
-            width: 64px;
-            height: 64px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            border: 4px solid var(--fedex-purple);
+            border: 3px solid var(--fedex-purple);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -137,7 +163,7 @@
             border: none;
             border-radius: 50%;
             text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 800;
             color: var(--text-main);
             outline: none;
@@ -145,7 +171,7 @@
         }
 
         .rotation-circle-wrapper label {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
@@ -155,27 +181,28 @@
         .inputs-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .input-group label {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: var(--text-muted);
         }
 
         .input-group select {
-            padding: 12px;
-            border-radius: 8px;
+            padding: 8px;
+            border-radius: 6px;
             border: 2px solid #cbd5e1;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 700;
             background-color: #fff;
             color: var(--text-main);
@@ -183,47 +210,52 @@
         }
 
         .grid-label {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: var(--text-muted);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            flex-shrink: 0;
         }
 
-        /* 48-Spot Ribbon Grid with Larger Text */
+        /* Grid scaling architecture: dynamic box dimensions using flex-grow variables */
         .spots-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr); /* 6 wide on mobile makes numbers MUCH bigger */
-            gap: 6px;
+            grid-template-columns: repeat(6, minmax(0, 1fr)); 
+            gap: 4px;
             background: #f8fafc;
-            padding: 8px;
-            border-radius: 10px;
+            padding: 6px;
+            border-radius: 8px;
             border: 2px solid #e2e8f0;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto; /* Fallback insurance in case screen height gets micro-small */
         }
 
-        /* Adjust to 12 columns on slightly wider/tablet screens */
+        /* 12 columns on slightly wider/tablet screen footprints */
         @media(min-width: 480px) {
             .spots-grid {
-                grid-template-columns: repeat(12, 1fr);
+                grid-template-columns: repeat(12, minmax(0, 1fr));
             }
         }
 
         .spot {
-            aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;       /* Doubled the font size */
-            font-weight: 800;      /* Forced maximum boldness */
-            border-radius: 6px;
+            font-size: 0.9rem;       
+            font-weight: 800;      
+            border-radius: 4px;
             background-color: #fff;
             color: #64748b;
             border: 1px solid #cbd5e1;
             position: relative;
+            /* Keeps blocks proportional without hardcoding aspect-ratio height crashes */
+            min-height: 28px; 
         }
 
         /* Our specialized team slots */
         .spot.our-spot {
-            border: 3px solid var(--fedex-orange);
+            border: 2px solid var(--fedex-orange);
             color: var(--text-main);
             box-shadow: 0 0 4px rgba(255, 102, 0, 0.2);
         }
@@ -243,20 +275,21 @@
         /* Share / Capture Button style */
         .share-btn {
             width: 100%;
-            margin-top: 14px;
-            padding: 12px;
+            margin-top: 8px;
+            padding: 10px;
             background-color: #e2e8f0;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--fedex-purple);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             cursor: pointer;
             transition: background-color 0.2s;
+            flex-shrink: 0;
         }
 
         .share-btn:active {
@@ -273,7 +306,7 @@
 
     <div class="legend">
         <div class="legend-item">
-            <div class="color-box" style="border: 3px solid var(--fedex-orange);"></div>
+            <div class="color-box" style="border: 2px solid var(--fedex-orange);"></div>
             <span>Our Spots (29, 30, 31, 35, 37)</span>
         </div>
         <div class="legend-item">
@@ -282,25 +315,27 @@
         </div>
         <div class="legend-item">
             <div class="color-box" style="background: var(--light-trans-blue);"></div>
-            <span>Completed Rotations (Laps Complete)</span>
+            <span>Completed Rotations</span>
         </div>
     </div>
 
-    <!-- Container for dynamic injection of the 7 days -->
     <div id="days-container"></div>
 
     <script>
         const OUR_SPOTS = [29, 30, 31, 35, 37];
-        const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-        // Storage initialization 
+        function getUtahDayName() {
+            const options = { weekday: 'long', timeZone: 'America/Denver' };
+            return new Intl.DateTimeFormat('en-US', options).format(new Date());
+        }
+
+        const currentDay = getUtahDayName();
+
         let appData = JSON.parse(localStorage.getItem('fedex_rotation_data_v2')) || {};
 
-        DAYS.forEach(day => {
-            if (!appData[day]) {
-                appData[day] = { start: 0, end: 0, rotations: 0 };
-            }
-        });
+        if (!appData[currentDay]) {
+            appData[currentDay] = { start: 0, end: 0, rotations: 0 };
+        }
 
         function saveToStorage() {
             localStorage.setItem('fedex_rotation_data_v2', JSON.stringify(appData));
@@ -310,74 +345,70 @@
             const container = document.getElementById('days-container');
             container.innerHTML = '';
 
-            DAYS.forEach(day => {
-                const data = appData[day];
-                const card = document.createElement('div');
-                card.className = 'day-card';
+            const data = appData[currentDay];
+            const card = document.createElement('div');
+            card.className = 'day-card';
 
-                let startOptions = '';
-                let endOptions = '';
-                for(let i=0; i<=47; i++) {
-                    startOptions += `<option value="${i}" ${data.start == i ? 'selected' : ''}>${i}</option>`;
-                    endOptions += `<option value="${i}" ${data.end == i ? 'selected' : ''}>${i}</option>`;
-                }
+            let startOptions = '';
+            let endOptions = '';
+            for(let i=0; i<=47; i++) {
+                startOptions += `<option value="${i}" ${data.start == i ? 'selected' : ''}>${i}</option>`;
+                endOptions += `<option value="${i}" ${data.end == i ? 'selected' : ''}>${i}</option>`;
+            }
 
-                // Internal capture-area wrapper separates the functional save button from the exported photo layout
-                card.innerHTML = `
-                    <div class="capture-area" id="capture-${day}">
-                        <div class="day-header">
-                            <div class="day-title">${day}</div>
-                            <div class="rotation-circle-wrapper">
-                                <div class="rotation-circle">
-                                    <input type="number" min="0" max="99" id="rot-${day}" value="${data.rotations}" inputmode="numeric">
-                                </div>
-                                <label>Rotations</label>
+            card.innerHTML = `
+                <div class="capture-area" id="capture-${currentDay}">
+                    <div class="day-header">
+                        <div class="day-title">${currentDay} (Today)</div>
+                        <div class="rotation-circle-wrapper">
+                            <div class="rotation-circle">
+                                <input type="number" min="0" max="99" id="rot-${currentDay}" value="${data.rotations}" inputmode="numeric">
                             </div>
+                            <label>Rotations</label>
                         </div>
-                        
-                        <div class="inputs-row">
-                            <div class="input-group">
-                                <label for="start-${day}">Started At</label>
-                                <select id="start-${day}">${startOptions}</select>
-                            </div>
-                            <div class="input-group">
-                                <label for="end-${day}">Ended At</label>
-                                <select id="end-${day}">${endOptions}</select>
-                            </div>
-                        </div>
-
-                        <div class="grid-label">Rotation Visualizer (0-47)</div>
-                        <div class="spots-grid" id="grid-${day}"></div>
                     </div>
                     
-                    <button class="share-btn" onclick="saveCardAsImage('${day}')">
-                        📸 Save ${day} as Image
-                    </button>
-                `;
+                    <div class="inputs-row">
+                        <div class="input-group">
+                            <label for="start-${currentDay}">Started At</label>
+                            <select id="start-${currentDay}">${startOptions}</select>
+                        </div>
+                        <div class="input-group">
+                            <label for="end-${currentDay}">Ended At</label>
+                            <select id="end-${currentDay}">${endOptions}</select>
+                        </div>
+                    </div>
 
-                container.appendChild(card);
-                renderGridElements(day);
+                    <div class="grid-label">Rotation Visualizer (0-47)</div>
+                    <div class="spots-grid" id="grid-${currentDay}"></div>
+                </div>
+                
+                <button class="share-btn" onclick="saveCardAsImage('${currentDay}')">
+                    📸 Save ${currentDay} as Image
+                </button>
+            `;
 
-                // Document input attachments
-                document.getElementById(`start-${day}`).addEventListener('change', (e) => {
-                    appData[day].start = parseInt(e.target.value);
-                    saveToStorage();
-                    renderGridElements(day);
-                });
+            container.appendChild(card);
+            renderGridElements(currentDay);
 
-                document.getElementById(`end-${day}`).addEventListener('change', (e) => {
-                    appData[day].end = parseInt(e.target.value);
-                    saveToStorage();
-                    renderGridElements(day);
-                });
+            document.getElementById(`start-${currentDay}`).addEventListener('change', (e) => {
+                appData[currentDay].start = parseInt(e.target.value);
+                saveToStorage();
+                renderGridElements(currentDay);
+            });
 
-                document.getElementById(`rot-${day}`).addEventListener('input', (e) => {
-                    let val = parseInt(e.target.value);
-                    if (isNaN(val) || val < 0) val = 0;
-                    appData[day].rotations = val;
-                    saveToStorage();
-                    renderGridElements(day);
-                });
+            document.getElementById(`end-${currentDay}`).addEventListener('change', (e) => {
+                appData[currentDay].end = parseInt(e.target.value);
+                saveToStorage();
+                renderGridElements(currentDay);
+            });
+
+            document.getElementById(`rot-${currentDay}`).addEventListener('input', (e) => {
+                let val = parseInt(e.target.value);
+                if (isNaN(val) || val < 0) val = 0;
+                appData[currentDay].rotations = val;
+                saveToStorage();
+                renderGridElements(currentDay);
             });
         }
 
@@ -418,26 +449,21 @@
             }
         }
 
-        // Image generation function
         function saveCardAsImage(day) {
             const targetElement = document.getElementById(`capture-${day}`);
-            
-            // Temporary styling optimizations to ensure inputs display accurately inside flat picture renders
             const selectElements = targetElement.querySelectorAll('select');
             selectElements.forEach(select => {
                 select.style.border = '2px solid #4d148c';
             });
 
             html2canvas(targetElement, {
-                scale: 2, // Doubles rendering resolution for clean visibility on high-res displays
+                scale: 2, 
                 backgroundColor: "#ffffff",
                 logging: false,
                 useCORS: true
             }).then(canvas => {
-                // Reset select element borders back to stylesheet parameters
                 selectElements.forEach(select => { select.style.border = ''; });
 
-                // Construct a direct file down-link setup
                 const link = document.createElement('a');
                 link.download = `FedEx_Rotation_${day}.png`;
                 link.href = canvas.toDataURL('image/png');
