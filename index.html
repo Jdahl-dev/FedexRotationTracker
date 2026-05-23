@@ -18,6 +18,9 @@
             /* Transparent Blue colors strictly as requested */
             --light-trans-blue: rgba(14, 165, 233, 0.25); 
             --dark-trans-blue: rgba(3, 105, 161, 0.85);  
+
+            /* New vibrant indicator for a hit dispatch */
+            --hit-red: #dc2626;
         }
 
         * {
@@ -322,28 +325,99 @@
             border-color: var(--dark-trans-blue);
         }
 
-        /* Share / Capture Button style */
-        .share-btn {
-            width: 100%;
-            margin-top: 8px;
-            padding: 10px;
-            background-color: #e2e8f0;
+        /* New structural rule for when one of your driver spots gets hit */
+        .spot.our-spot.highlight-light,
+        .spot.our-spot.highlight-dark {
+            background-color: var(--hit-red) !important;
+            color: #ffffff !important;
+            border-color: var(--hit-red) !important;
+            box-shadow: 0 0 6px rgba(220, 38, 38, 0.4);
+        }
+
+        /* Action Buttons at bottom */
+        .actions-footer {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .share-btn, .finish-btn {
+            padding: 12px;
             border: none;
-            border-radius: 6px;
-            color: var(--fedex-purple);
+            border-radius: 8px;
             font-size: 0.85rem;
-            font-weight: 700;
+            font-weight: 800;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
             cursor: pointer;
-            transition: background-color 0.2s;
-            flex-shrink: 0;
+            transition: all 0.15s ease;
         }
 
-        .share-btn:active {
-            background-color: #cbd5e1;
+        .share-btn {
+            flex: 1;
+            background-color: #e2e8f0;
+            color: var(--fedex-purple);
+        }
+        .share-btn:active { background-color: #cbd5e1; }
+
+        .finish-btn {
+            flex: 1.3;
+            background-color: #16a34a; /* Vibrant success green */
+            color: white;
+            box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
+        }
+        .finish-btn:active {
+            transform: scale(0.98);
+            background-color: #15803d;
+        }
+
+        /* OFF-SCREEN MASTER GENERATOR CANVAS STYLES */
+        #master-render-canvas {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 700px;
+            background: var(--bg-color);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .master-header {
+            background: var(--fedex-purple);
+            color: white;
+            padding: 14px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .master-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .master-static-card {
+            background: white;
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid #cbd5e1;
+        }
+        .master-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+        }
+        .master-meta span mark {
+            background: none;
+            color: var(--fedex-purple);
+            font-weight: 800;
         }
     </style>
 </head>
@@ -369,6 +443,10 @@
         <div class="legend-item">
             <div class="color-box" style="background: var(--light-trans-blue);"></div>
             <span>Completed Rotations</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background: var(--hit-red);"></div>
+            <span>Our Spot Hit (Dispatch)</span>
         </div>
     </div>
 
@@ -402,9 +480,10 @@
                         <div class="grid-label">Rotation Visualizer (0-47)</div>
                         <div class="spots-grid" id="grid-salt"></div>
                     </div>
-                    <button class="share-btn" onclick="saveCardAsImage('salt')">
-                        📸 Save Salt Lake Chart as Image
-                    </button>
+                    <div class="actions-footer">
+                        <button class="share-btn" onclick="saveCardAsImage('salt')">📸 Save Salt Only</button>
+                        <button class="finish-btn" onclick="generateCombinedReport()">🏁 Finish & Combine Hubs</button>
+                    </div>
                 </div>
             </div>
 
@@ -434,21 +513,49 @@
                         <div class="grid-label">Magna Rotation Visualizer (1-5)</div>
                         <div class="spots-grid magna-grid-layout" id="grid-magna"></div>
                     </div>
-                    <button class="share-btn" onclick="saveCardAsImage('magna')">
-                        📸 Save Magna Chart as Image
-                    </button>
+                    <div class="actions-footer">
+                        <button class="share-btn" onclick="saveCardAsImage('magna')">📸 Save Magna Only</button>
+                        <button class="finish-btn" onclick="generateCombinedReport()">🏁 Finish & Combine Hubs</button>
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
 
+    <!-- INVISIBLE ENGINE BLOCK: Prepared specifically for unified script snapshot captures -->
+    <div id="master-render-canvas">
+        <div class="master-header">
+            <h2 style="font-weight: 800; font-size: 1.4rem; margin-bottom: 2px;">Rotation Summary</h2>
+            <p id="master-date-text" style="font-size: 0.85rem; opacity: 0.9; font-weight:600;"></p>
+        </div>
+        
+        <div class="master-row">
+            <!-- Salt Lake Snapshot Segment -->
+            <div class="master-static-card">
+                <div class="master-meta">
+                    <span style="color: var(--fedex-purple); font-size:1.1rem; font-weight:800;">Salt Lake Hub</span>
+                    <span id="master-meta-salt"></span>
+                </div>
+                <div class="spots-grid" id="master-grid-salt" style="grid-template-columns: repeat(12, minmax(0, 1fr)); overflow: visible;"></div>
+            </div>
+
+            <!-- Magna Snapshot Segment -->
+            <div class="master-static-card">
+                <div class="master-meta">
+                    <span style="color: var(--fedex-purple); font-size:1.1rem; font-weight:800;">Magna Hub</span>
+                    <span id="master-meta-magna"></span>
+                </div>
+                <div class="spots-grid magna-grid-layout" id="master-grid-magna" style="overflow: visible;"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Target configs per requirements
-        const SALT_SPOTS = [29, 30, 31, 34, 37]; // 35 swapped out for 34
+        const SALT_SPOTS = [29, 30, 31, 34, 37]; 
         const MAGNA_SPOTS = [4, 5];
 
-        let activeHub = "salt"; // Default layout tracker state
+        let activeHub = "salt"; 
 
         function getUtahDayName() {
             const options = { weekday: 'long', timeZone: 'America/Denver' };
@@ -457,7 +564,6 @@
 
         const currentDay = getUtahDayName();
         
-        // Initialize distinct Storage IDs to avoid crossover bugs
         let appData = JSON.parse(localStorage.getItem('fedex_rotation_data_v3')) || {
             salt: {},
             magna: {}
@@ -470,7 +576,6 @@
             localStorage.setItem('fedex_rotation_data_v3', JSON.stringify(appData));
         }
 
-        // Toggles layouts with sleek slider motion and updates headers dynamically
         function switchHubView() {
             const container = document.getElementById('slider-container');
             const mainTitle = document.getElementById('header-hub-title');
@@ -498,11 +603,9 @@
         function setupHubControls(hubType, minVal, maxVal) {
             const data = appData[hubType][currentDay];
             
-            // Set up local titles
             document.getElementById(`day-title-${hubType}`).textContent = `${currentDay} (Today)`;
             document.getElementById(`rot-${hubType}`).value = data.rotations;
 
-            // Generate precise dropdown option limits
             const startSelect = document.getElementById(`start-${hubType}`);
             const endSelect = document.getElementById(`end-${hubType}`);
             
@@ -512,22 +615,21 @@
             }
             
             startSelect.innerHTML = optionsHtml;
-            endSelect.innerHTML = optionsHtml;
+            document.getElementById(`end-${hubType}`).innerHTML = optionsHtml;
             
             startSelect.value = data.start;
             endSelect.value = data.end;
 
-            // Attach clean data listener monitors
             startSelect.addEventListener('change', (e) => {
                 appData[hubType][currentDay].start = parseInt(e.target.value);
                 saveToStorage();
-                renderGrid(hubType, minVal, maxVal);
+                renderGrid(hubType, minVal, maxVal, `grid-${hubType}`);
             });
 
             endSelect.addEventListener('change', (e) => {
                 appData[hubType][currentDay].end = parseInt(e.target.value);
                 saveToStorage();
-                renderGrid(hubType, minVal, maxVal);
+                renderGrid(hubType, minVal, maxVal, `grid-${hubType}`);
             });
 
             document.getElementById(`rot-${hubType}`).addEventListener('input', (e) => {
@@ -535,14 +637,14 @@
                 if (isNaN(val) || val < 0) val = 0;
                 appData[hubType][currentDay].rotations = val;
                 saveToStorage();
-                renderGrid(hubType, minVal, maxVal);
+                renderGrid(hubType, minVal, maxVal, `grid-${hubType}`);
             });
 
-            renderGrid(hubType, minVal, maxVal);
+            renderGrid(hubType, minVal, maxVal, `grid-${hubType}`);
         }
 
-        function renderGrid(hubType, minVal, maxVal) {
-            const grid = document.getElementById(`grid-${hubType}`);
+        function renderGrid(hubType, minVal, maxVal, targetElementId) {
+            const grid = document.getElementById(targetElementId);
             grid.innerHTML = '';
             
             const data = appData[hubType][currentDay];
@@ -557,7 +659,6 @@
                     spotDiv.classList.add('our-spot');
                 }
 
-                // Mathematical highlight layout logic matching your version perfectly
                 if (data.rotations > 0) {
                     spotDiv.classList.add('highlight-light');
                     if (i <= data.end) {
@@ -578,7 +679,6 @@
             }
         }
 
-        // Capture logic isolated per panel view
         function saveCardAsImage(hubType) {
             const targetElement = document.getElementById(`capture-${hubType}`);
             const selectElements = targetElement.querySelectorAll('select');
@@ -596,11 +696,40 @@
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             }).catch(err => {
-                alert("Could not generate image file. If inside an integrated app web-view, open in a primary browser window instead.");
+                alert("Could not generate image file.");
             });
         }
 
-        // Initialize components for both views on launch
+        // Logic processing step building the hidden clean layout frame and capturing it
+        function generateCombinedReport() {
+            document.getElementById('master-date-text').textContent = `${currentDay}`;
+
+            const sData = appData.salt[currentDay];
+            const mData = appData.magna[currentDay];
+
+            document.getElementById('master-meta-salt').innerHTML = `Start: <b>${sData.start}</b> | End: <b>${sData.end}</b> | Total Rots: <b>${sData.rotations}</b>`;
+            document.getElementById('master-meta-magna').innerHTML = `Start: <b>${mData.start}</b> | End: <b>${mData.end}</b> | Total Rots: <b>${mData.rotations}</b>`;
+
+            renderGrid('salt', 0, 47, 'master-grid-salt');
+            renderGrid('magna', 1, 5, 'master-grid-magna');
+
+            const masterCanvasContainer = document.getElementById('master-render-canvas');
+
+            html2canvas(masterCanvasContainer, {
+                scale: 2,
+                backgroundColor: "#f4f6f9",
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `FedEx_Combined_Shift_Report_${currentDay}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                alert("Failed to render combined image file.");
+            });
+        }
+
         setupHubControls('salt', 0, 47);
         setupHubControls('magna', 1, 5);
     </script>
